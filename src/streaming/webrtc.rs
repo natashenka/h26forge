@@ -188,7 +188,7 @@ pub async fn stream(
 
         Box::pin(async {})
     }));
-
+    
     let mut encoded_desc = "".to_owned();
     if !server.is_empty() {
         let mut server_string = server.clone().to_owned();
@@ -199,6 +199,7 @@ pub async fn stream(
             let msg = b"Hello!";
             stream.write(msg).unwrap();
             println!("Awaiting SDP from server {}", server_string);
+            
             while !encoded_desc .ends_with("\n"){
             match stream.read_to_string(&mut encoded_desc ) {
                 Ok(_) => {
@@ -213,9 +214,11 @@ pub async fn stream(
             println!("Failed to connect: {} {}", e, server_string);
         }
         }
-        encoded_desc.pop();
-    } else {
-        encoded_desc = fs::read_to_string(webrtc_file)?;
+        
+        encoded_desc.pop();	
+    
+    } else {    
+        encoded_desc = fs::read_to_string(webrtc_file)?;   
     }
     let desc_data = decode(&encoded_desc)?;
     let offer = serde_json::from_str::<RTCSessionDescription>(&desc_data)?;
@@ -238,7 +241,8 @@ pub async fn stream(
     let _ = gather_complete.recv().await;
 
     // Output the answer in base64 so we can paste it in browser
-    let mut b64 = "".to_owned(); 
+    let mut b64 = "".to_owned();
+    
     if let Some(local_desc) = peer_connection.local_description().await {
         let json_str = serde_json::to_string(&local_desc)?;
         b64 = encode(&json_str);
@@ -258,11 +262,11 @@ pub async fn stream(
                 stream.write(msg.as_bytes()).unwrap();
             },
             Err(e) => {
-                println!("Failed to connect and send local desc: {} {}", e, server_string);
+                println!("Failed to connect local: {} {}", e, server_string);
             }
-        }
+        }    
     }
-
+    
     let done_tx3 = done_tx.clone();
 
     // Video generator
